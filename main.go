@@ -1,25 +1,29 @@
-package main // main은 컴파일을 위해서 필요한 것일 뿐
+package main
 
 import (
-	"fmt"
+	"os"
+	"strings"
 
-	"github.io/hkseo98/learngo/mydict"
+	"github.com/labstack/echo"
+	"github.io/hkseo98/learngo/scrapper"
 )
 
+const fileName string = "jobs.csv"
+
+func handleHome(c echo.Context) error {
+	return c.File("home.html")
+}
+
+func handleScrape(c echo.Context) error {
+	defer os.Remove(fileName)
+	term := strings.ToLower(scrapper.CleanString(c.FormValue("term")))
+	scrapper.Scrape(term)
+	return c.Attachment(fileName, fileName)
+}
+
 func main() {
-	dictionary := mydict.Dictionary{}
-	word := "first"
-	dictionary.Add(word, "first word")
-	err := dictionary.Delete(word)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	val, err := dictionary.Search(word)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(dictionary)
-	fmt.Println(val)
+	e := echo.New()
+	e.GET("/", handleHome)
+	e.POST("/scrape", handleScrape)
+	e.Logger.Fatal(e.Start(":1323"))
 }
